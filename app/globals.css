@@ -1,0 +1,27 @@
+.listview {
+    width: 50vw;
+    display: grid;
+}
+.listview.listview-lg {
+    width: 75vw;
+}
+
+.modal {
+    display: block;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal > .modal-dialog {
+    align-items: center;
+    display: flex;
+}
+
+.valid-feedback, .invalid-feedback {
+    display: block;
+}
+
+@media print {
+    .print-preview .print-hide {
+        display: none !important;
+    }
+}
