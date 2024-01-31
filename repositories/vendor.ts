@@ -1,13 +1,17 @@
 'use server'
 
 import { db } from '@/db/database'
-import { NewVendor, Vendor } from '@/db/types/vendor'
+import { NewVendor, Vendor, VendorUpdate } from '@/db/types/vendor'
 
 export async function createVendor(vendor: NewVendor) {
     return await db.insertInto('vendor')
         .values(vendor)
         .returningAll()
         .executeTakeFirstOrThrow()
+}
+
+export async function updateVendor(id: number, updateWith: VendorUpdate) {
+    await db.updateTable('vendor').set(updateWith).where('id', '=', id).execute()
 }
 
 export async function deleteVendor(id: number) {

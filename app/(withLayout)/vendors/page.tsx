@@ -1,8 +1,8 @@
 'use client'
 
 import Pagination from '@/components/Pagination'
-import { Vendor } from '@/db/types/vendor'
-import { deleteVendor, findVendor } from '@/repositories/vendor'
+import { Vendor, VendorUpdate } from '@/db/types/vendor'
+import { deleteVendor, findVendor, updateVendor } from '@/repositories/vendor'
 import { debounce } from 'lodash'
 import Link from 'next/link'
 import { useCallback, useEffect, useState } from 'react'
@@ -23,6 +23,7 @@ export default function VendorPage() {
     const debouncedSearchChange = useCallback(debounce(searchVendors, 500), [])
 
     useEffect(() => {
+        setLoading(true)
         debouncedSearchChange(search, pagination.pageNumber)
     }, [search, pagination.pageNumber])
 
@@ -47,6 +48,17 @@ export default function VendorPage() {
             setVendors([])
             
             await deleteVendor(id)
+
+            debouncedSearchChange(search, pagination.pageNumber)
+        },
+        async saveVendor(vendor: Vendor) {
+            const updateWith = {
+                name: vendor.name
+            }
+
+            setLoading(true)
+            setVendors([])
+            await updateVendor(vendor.id, updateWith)
 
             debouncedSearchChange(search, pagination.pageNumber)
         }
@@ -92,7 +104,7 @@ export default function VendorPage() {
                         </div>
                     </div>
                     <div className="mb-3">
-                        {VendorList(vendors, search, loading, handlers.onVendorDelete)}
+                        {VendorList(vendors, loading, handlers.onVendorDelete, handlers.saveVendor)}
                     </div>
                     <div className="row align-items-center">
                         <div className="col text-secondary">
@@ -118,27 +130,75 @@ export default function VendorPage() {
 
 function VendorList(
     vendors: Vendor[],
-    search = '',
     loading = false,
-    onDelete: (id: number) => void = () => {}
+    onDelete: (id: number) => void = () => {},
+    onSave: (vendor: Vendor) => void = () => {}
 ) {
+    const [editing, setEditing] = useState<Vendor | null>(null)
+    const [editingId, setEditingId] = useState<number | null>(null)
+
+    const handlers = {
+        editNameChange(e: any) {
+            const { value } = e.target
+
+            if (editing) setEditing({
+                ...editing,
+                name: value
+            })
+        },
+        editNameKeyDown(e: any) {
+            if (e.key === 'Enter' && editing) {
+                onSave(editing)
+
+                setEditing(null)
+                setEditingId(null)
+            }
+            if (e.key === 'Escape') {
+                setEditing(null)
+                setEditingId(null)
+            }
+        },
+        setEditVendor(vendor: Vendor) {
+            setEditing(vendor)
+            setEditingId(vendor.id)
+        }
+    }
+
     if (vendors.length > 0) return (
         <div className="list-group">
             {
                 vendors.map(v =>
                     <button type="button" className="list-group-item list-group-item-action">
-                        <div className="row">
-                            <div className="col">{v.name}</div>
-                            <div className="col-auto">
-                                <a onClick={() => onDelete(v.id)} className='text-danger' role='button'><i className="bi bi-trash"></i></a>
-                            </div>
-                        </div>
+                        {
+                            editingId == v.id
+                            ? (
+                                <div className="row">
+                                    <div className="col">
+                                        <input
+                                            onKeyDown={handlers.editNameKeyDown}
+                                            onChange={handlers.editNameChange}
+                                            value={editing ? editing.name : ''}
+                                            autoComplete='off'
+                                            autoCorrect='off'
+                                            autoFocus={true}
+                                            type="text" className="form-control" />
+                                    </div>
+                                </div>
+                            )
+                            : (
+                                <div className="row">
+                                    <div onClick={() => handlers.setEditVendor(v)} className="col">{v.name}</div>
+                                    <div className="col-auto">
+                                        <a onClick={() => onDelete(v.id)} className='text-danger' role='button'><i className="bi bi-trash"></i></a>
+                                    </div>
+                                </div>
+                            )
+                        }
                     </button>
                 )
             }
         </div>
     )
     if (loading) return <h5 className="text-secondary mt-5 mb-5 text-center">Loading...</h5>
-    if (!search) return <h5 className="text-secondary mt-5 mb-5 text-center">Type vendor name</h5>
     return <h5 className="text-secondary mt-5 mb-5 text-center">No vendor found</h5>
 }

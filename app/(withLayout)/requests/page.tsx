@@ -111,7 +111,7 @@ export default function RequestPage() {
                     </div>
                     {
                         isLoading
-                        ? <h5 className="mt-5 text-center text-secondary">Searching...</h5>
+                        ? <h5 className="mt-5 mb-5 text-center text-secondary">Searching...</h5>
                         : (
                             requests.length < 1
                             ? <h5 className="mt-5 text-center text-secondary">No request found</h5>
