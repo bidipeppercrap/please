@@ -3,7 +3,7 @@
 import { findCategories } from '@/repositories/category';
 
 export async function find(name: string, pageSize: number) {
-    const result = await findCategories({ name: name }, pageSize);
+    const { data } = await findCategories({ name: name }, pageSize);
 
-    return result
+    return data
 }

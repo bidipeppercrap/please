@@ -30,6 +30,10 @@ const navList: navItem[] = [
         url: '/waitlist'
     },
     {
+        title: 'collections',
+        url: '/collections'
+    },
+    {
         title: '⚙️',
         url: '/config'
     }
@@ -47,9 +51,7 @@ export default function Navbar() {
     return (
         <nav className="navbar sticky-top bg-body-tertiary border-bottom">
             <div className="container-fluid">
-                <div className="navbar-brand">
-                    Please
-                </div>
+                <div className="navbar-brand">🙏 Please RfQ</div>
                 <ul className="nav nav-underline">
                     {listView}
                 </ul>
