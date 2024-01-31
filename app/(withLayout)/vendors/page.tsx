@@ -55,9 +55,6 @@ export default function VendorPage() {
             const updateWith = {
                 name: vendor.name
             }
-
-            setLoading(true)
-            setVendors([])
             await updateVendor(vendor.id, updateWith)
 
             debouncedSearchChange(search, pagination.pageNumber)
@@ -147,11 +144,8 @@ function VendorList(
             })
         },
         editNameKeyDown(e: any) {
-            if (e.key === 'Enter' && editing) {
-                onSave(editing)
-
-                setEditing(null)
-                setEditingId(null)
+            if (e.key === 'Enter') {
+                saveVendor()
             }
             if (e.key === 'Escape') {
                 setEditing(null)
@@ -159,9 +153,20 @@ function VendorList(
             }
         },
         setEditVendor(vendor: Vendor) {
+            saveVendor()
+
             setEditing(vendor)
             setEditingId(vendor.id)
         }
+    }
+
+    function saveVendor() {
+        if (!editing) return
+
+        onSave(editing)
+
+        setEditing(null)
+        setEditingId(null)
     }
 
     if (vendors.length > 0) return (

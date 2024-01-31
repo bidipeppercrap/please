@@ -5,7 +5,7 @@ import { debounce } from 'lodash'
 import { NewRequestProduct } from '@/db/types/request_product'
 
 import Link from 'next/link'
-import { deleteProduct, deleteProductBulk, findProduct } from '@/repositories/product'
+import { deleteProduct, deleteProductBulk, findProduct, updateProduct } from '@/repositories/product'
 import ProductList from '@/components/ProductList'
 import Pagination from '@/components/Pagination'
 import ListSelectorMenu from '@/components/ListSelectorMenu'
@@ -13,6 +13,7 @@ import ViewSelectedProductModal from '@/components/modals/ViewSelectedProductMod
 import { createRequestProduct, moveProductToRequest } from '@/repositories/request-product'
 import RequestSelectionModal from '@/components/modals/RequestSelectionModal'
 import { Request } from '@/db/types/request'
+import { Product, ProductUpdate } from '@/db/types/product'
 
 export default function ProductPage() {
     const pageSize = 20
@@ -132,6 +133,16 @@ export default function ProductPage() {
         debouncedHandleNameChange(searchQuery, pageNumber, filterType)
     }
 
+    async function handleProductSave(product: Product) {
+        const updateWith: ProductUpdate = {
+            name: product.name
+        }
+
+        await updateProduct(product.id, updateWith)
+
+        await search(searchQuery, pageNumber, filterType)
+    }
+
     return (
         <main className="container-fluid mt-5 mb-5">
             {
@@ -216,6 +227,7 @@ export default function ProductPage() {
                             deleteProduct={handleProductDelete}
                             selected={selected}
                             onSelectionChange={handleSelectionChange}
+                            onSave={handleProductSave}
                         />
                     </div>
                     <div className="row align-items-center justify-content-center">

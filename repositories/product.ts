@@ -1,13 +1,20 @@
 'use server'
 
 import { db } from '@/db/database'
-import { NewProduct, Product } from '@/db/types/product'
+import { NewProduct, Product, ProductUpdate } from '@/db/types/product'
 
 export async function createProduct(product: NewProduct) {
     return await db.insertInto('product')
         .values(product)
         .returningAll()
         .executeTakeFirstOrThrow()
+}
+
+export async function updateProduct(id: number, updateWith: ProductUpdate) {
+    await db.updateTable('product')
+        .set(updateWith)
+        .where('id', '=', id)
+        .execute()
 }
 
 export async function deleteProduct(id: number) {
