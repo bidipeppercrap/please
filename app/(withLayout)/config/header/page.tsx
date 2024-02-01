@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { HeaderConfig, fetchHeader, saveHeader } from '@/repositories/config'
 import { debounce } from 'lodash'
 
@@ -23,12 +23,14 @@ interface SaveStatus {
 }
 
 function HeaderForm() {
-    const headerDefault: HeaderConfig = {
-        name: '',
-        phone: '',
-        phoneUrl: '',
-        email: ''
-    }
+    const headerDefault: HeaderConfig = useMemo(() => {
+        return {
+            name: '',
+            phone: '',
+            phoneUrl: '',
+            email: ''
+        }
+    }, [])
     const saveStatusDefault: SaveStatus = {
         message: '',
         status: null
@@ -37,7 +39,10 @@ function HeaderForm() {
     const [header, setHeader] = useState<HeaderConfig>(headerDefault)
     const [saveStatus, setSaveStatus] = useState<SaveStatus>(saveStatusDefault)
 
-    const debouncedClearSaveStatus = useCallback(debounce(() => setSaveStatus(saveStatusDefault), 5000), [])
+    const debouncedClearSaveStatus = useMemo(() => debounce(() => setSaveStatus({
+        message: '',
+        status: null
+    }), 5000), [])
 
     useEffect(() => {
         const fetch = async () => {
@@ -46,9 +51,9 @@ function HeaderForm() {
         }
 
         fetch()
-    }, [])
+    }, [headerDefault])
 
-    useEffect(() => debouncedClearSaveStatus(), [saveStatus])
+    useEffect(() => debouncedClearSaveStatus(), [saveStatus, debouncedClearSaveStatus])
 
     const handlers = {
         headerNameChange(e: any) {

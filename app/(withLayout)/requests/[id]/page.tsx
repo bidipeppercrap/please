@@ -2,21 +2,20 @@
 
 import ListSelectorMenu from '@/components/ListSelectorMenu'
 import Pagination from '@/components/Pagination'
-import ProductSelectionInput from '@/components/ProductSelectionInput'
+import ProductSelectionInput from '@/components/ProductSelectionInput02'
 import RequestForm from '@/components/RequestForm'
 import RequestProductCreationForm from '@/components/RequestProductCreationForm'
 import RequestSelectionModal from '@/components/modals/RequestSelectionModal'
 import ViewSelectedWailistModal from '@/components/modals/ViewSelectedWaitlistModal'
 import { Product } from '@/db/types/product'
-import { Request, RequestUpdate } from '@/db/types/request'
+import { NewRequest, Request, RequestUpdate } from '@/db/types/request'
 import { NewRequestProduct, RequestProduct, RequestProductDetail } from '@/db/types/request_product'
-import { Vendor } from '@/db/types/vendor'
-import { deleteRequest, findRequestById, updateRequest } from '@/repositories/request'
+import { deleteRequest, updateRequest } from '@/repositories/request'
 import { createRequestProductWithOrdering, deleteRequestProductWithOrdering, findRequestProduct, moveRequestToRequest, moveRequestToWaitlist, moveWaitlistToRequest, updateRequestProductWithOrdering } from '@/repositories/request-product'
 import { formatISO } from 'date-fns'
 import { debounce } from 'lodash'
 import { useRouter } from 'next/navigation'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 export default function RequestDetailPage({
     params
@@ -31,7 +30,6 @@ export default function RequestDetailPage({
 
     const [errorMessage, setErrorMessage] = useState('')
     const [successMessage, setSuccessMessage] = useState('')
-    const [request, setRequest] = useState<RequestUpdate | undefined>(undefined)
     const [products, setProducts] = useState<RequestProductDetail[]>([])
 
     const [editProductIndex, setEditProductIndex] = useState<number | null>(null)
@@ -39,10 +37,17 @@ export default function RequestDetailPage({
     const [selected, setSelected] = useState<RequestProductDetail[]>([])
     const [activeModal, setActiveModal] = useState<'selection' | 'requests' | null>(null)
 
-    const debouncedSuccessMessage = useCallback(debounce(() => setSuccessMessage(''), 10000), [])
-    const debouncedErrorMessage = useCallback(debounce(() => setErrorMessage(''), 10000), [])
+    const debouncedSuccessMessage = useMemo(() => debounce(() => setSuccessMessage(''), 10000), [])
+    const debouncedErrorMessage = useMemo(() => debounce(() => setErrorMessage(''), 10000), [])
 
     const editProductDescriptionRef = useRef<any>(null)
+
+    const refreshProducts = useCallback(async () => {
+        const { data, count } = await findRequestProduct({ request_id: params.id }, pageSize, pageNumber, 'order_in_request')
+
+        setPageCount(Math.ceil(count / pageSize))
+        setProducts(data)
+    }, [pageNumber, params.id])
 
     useEffect(() => {
         const refresh = async () => {
@@ -50,80 +55,14 @@ export default function RequestDetailPage({
         }
 
         refresh()
-    }, [pageNumber])
-    useEffect(() => debouncedSuccessMessage(), [successMessage])
-    useEffect(() => debouncedErrorMessage(), [errorMessage])
-    
-    useEffect(() => {
-        const fetchData = async () => await findRequestById(params.id)
+    }, [pageNumber, refreshProducts])
+    useEffect(() => debouncedSuccessMessage(), [successMessage, debouncedSuccessMessage])
+    useEffect(() => debouncedErrorMessage(), [errorMessage, debouncedErrorMessage])
 
-        fetchData().then(result => {
-            const parsed: RequestUpdate = {
-                id: result?.id,
-                reference: result?.reference ? result.reference : '',
-                note: result?.note,
-                source_document: result?.source_document,
-                accepted_at: result?.accepted_at ? formatISO(result.accepted_at, { representation: 'date' }) : '',
-                updated_at: result?.updated_at ? formatISO(result.updated_at) : '',
-                vendor_name: result?.vendor_name,
-                vendor_id: result?.vendor_id
-            }
+    async function handleSave(request: NewRequest) {
+        const data: RequestUpdate = {...request}
 
-            setRequest(parsed)
-        })
-    }, [])
-
-    function handleReferenceChange(e: any) {
-        setRequest({
-            ...request,
-            reference: e.target.value
-        })
-    }
-
-    function handleSourceDocumentChange(e: any) {
-        setRequest({
-            ...request,
-            source_document: e.target.value
-        })
-    }
-
-    function handleVendorNameChange(e: any) {
-        setRequest({
-            ...request,
-            vendor_name: e.target.value
-        })
-    }
-
-    function handleNoteChange(e: any) {
-        setRequest({
-            ...request,
-            note: e.target.value
-        })
-    }
-
-    function handleVendorChange(vendor: Vendor | null) {
-        setRequest({
-            ...request,
-            vendor_id: vendor ? vendor.id : null,
-            vendor_name: vendor ? vendor.name : null
-        })
-    }
-
-    function handleAcceptedAtChange(date: string) {
-        if (!date) setRequest({
-            ...request,
-            accepted_at: undefined
-        })
-        else setRequest({
-            ...request,
-            accepted_at: date
-        })
-    }
-
-    async function handleSave() {
-        const data = {...request}
-
-        data.accepted_at =  !data.accepted_at || data.accepted_at.length < 1 ? null : data.accepted_at
+        data.accepted_at = !data.accepted_at || data.accepted_at.length < 1 ? null : data.accepted_at
         data.updated_at = formatISO(Date.now())
 
         try {
@@ -159,16 +98,8 @@ export default function RequestDetailPage({
         await refreshProducts()
     }
 
-    async function refreshProducts() {
-        const { data, count } = await findRequestProduct({ request_id: params.id }, pageSize, pageNumber, 'order_in_request')
-
-        setPageCount(Math.ceil(count / pageSize))
-        setProducts(data)
-    }
-
     async function handleDeleteRequest() {
         setProducts([])
-        setRequest(undefined)
         await deleteRequest(params.id)
         router.push('/requests')
     }
@@ -176,12 +107,6 @@ export default function RequestDetailPage({
     async function handleDeleteProduct(id: number) {
         await deleteRequestProductWithOrdering(id)
         await refreshProducts()
-    }
-
-    async function handleNewProductSelectionKeyDown(e: any) {
-        if (e.key === 'Escape') {
-            
-        }
     }
 
     function handleEditInputProductKeyDown(e: any) {
@@ -379,29 +304,13 @@ export default function RequestDetailPage({
             }
             <div className="d-grid justify-content-center">
                 <div className="listview listview-lg">
-                    {
-                        !request
-                        ? <h1 className="text-center text-secondary">Loading...</h1>
-                        : (
-                            <>
-                            <h1 className="text-center mb-3">{request.reference}</h1>
-                            <RequestForm
-                                request={request}
-                                handler={{
-                                    referenceChange: handleReferenceChange,
-                                    vendorNameChange: handleVendorNameChange,
-                                    sourceDocumentChange: handleSourceDocumentChange,
-                                    vendorChange: handleVendorChange,
-                                    noteChange: handleNoteChange,
-                                    acceptedAtChange: handleAcceptedAtChange
-                                }}
-                                onPrint={() => {}}
-                                onSave={handleSave}
-                                onDelete={handleDeleteRequest}
-                            />
-                            </>
-                        )
-                    }
+                    <h1 className="text-center mb-3">Edit Request</h1>
+                    <RequestForm
+                        request_id={params.id}
+                        onPrint={() => {}}
+                        onSave={handleSave}
+                        onDelete={handleDeleteRequest}
+                    />
                     { successMessage ? <div className="alert alert-success mt-3">{successMessage}</div> : null }
                     { errorMessage ? <div className="alert alert-danger mt-3">{errorMessage}</div> : null }
                     <div className="mt-3">
@@ -467,17 +376,12 @@ export default function RequestDetailPage({
                                                         </div>
                                                         <div className="col">
                                                             <ProductSelectionInput
-                                                                onKeyDown={handleEditInputProductKeyDown}
-                                                                preSelected={
+                                                                productId={
                                                                     !products[editProductIndex]
                                                                     ? null
-                                                                    : {
-                                                                        id: products[editProductIndex].product_id!,
-                                                                        name: products[editProductIndex].product_name,
-                                                                        category_id: null
-                                                                    }}
+                                                                    : products[editProductIndex].product_id!
+                                                                }
                                                                 onSelect={editProductHandler.handleEditProductSelection}
-                                                                onProductChange={editProductHandler.handleEditProductSelectionProductChange}
                                                             />
                                                         </div>
                                                         <div className="col">

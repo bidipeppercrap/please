@@ -5,7 +5,7 @@ import { Request } from '@/db/types/request'
 import { deleteRequest, findRequest } from '@/repositories/request'
 import { debounce } from 'lodash'
 import Link from 'next/link'
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 export default function RequestPage() {
     const pageSize = 25
@@ -17,12 +17,12 @@ export default function RequestPage() {
     const [pageNumber, setPageNumber] = useState(1)
     const [pageCount, setPageCount] = useState(1)
 
-    const debouncedSearchChange = useCallback(debounce(searchRequest, 500), [])
+    const debouncedSearchChange = useMemo(() => debounce(searchRequest, 500), [])
 
     useEffect(() => {
         setIsLoading(true)
         debouncedSearchChange(vendorSearch, referenceSearch, pageSize, pageNumber)
-    }, [pageNumber, vendorSearch, referenceSearch])
+    }, [pageNumber, vendorSearch, referenceSearch, debouncedSearchChange])
 
     async function searchRequest(vendor: string, reference: string, pageSize: number, pageNumber: number) {
         const { data, count } = await findRequest({

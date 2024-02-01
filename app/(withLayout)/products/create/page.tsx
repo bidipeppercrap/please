@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { debounce } from 'lodash'
 import { save } from './actions'
 import { find } from '../actions'
@@ -17,7 +17,7 @@ export default function CreateProductPage() {
 
     const nameInput = useRef<any>(null)
 
-    const debouncedHandleNameChange = useCallback(debounce(findProducts, 500), [])
+    const debouncedHandleNameChange = useMemo(() => debounce(findProducts, 500), [])
 
     async function findProducts(name: string) {
         if (name.length < 1) return

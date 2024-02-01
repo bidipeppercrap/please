@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { save } from './actions'
 import { find } from '../actions';
@@ -12,7 +12,7 @@ export default function CreateCategoryPage() {
     const [loading, setLoading] = useState(false)
     const [categories, setCategories] = useState<any[]>([])
 
-    const debouncedHandleNameChange = useCallback(debounce(findCategories, 500), [])
+    const debouncedHandleNameChange = useMemo(() => debounce(findCategories, 500), [])
 
     function handleNameChange(e: any) {
         setCategories([])

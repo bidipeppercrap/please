@@ -5,7 +5,7 @@ import { Category } from '@/db/types/category'
 import { deleteCategory, findCategories } from '@/repositories/category'
 import { debounce } from 'lodash'
 import { useRouter } from 'next/navigation'
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 const paginationDefault = {
     pageNumber: 1,
@@ -21,11 +21,11 @@ export default function CategoryPage() {
     const [pagination, setPagination] = useState(paginationDefault)
     const [categories, setCategories] = useState<Category[]>([])
 
-    const debouncedSearchChange = useCallback(debounce(searchCategories, 500), [])
+    const debouncedSearchChange = useMemo(() => debounce(searchCategories, 500), [])
 
     useEffect(() => {
         debouncedSearchChange(search, pagination.pageNumber)
-    }, [search, pagination.pageNumber])
+    }, [search, pagination.pageNumber, debouncedSearchChange])
 
     const handlers = {
         searchChange(e: any) {
@@ -118,7 +118,7 @@ function CategoryList(list: Category[], search = '', loading = false, onDelete: 
     if (list.length > 0) return <div className="list-group">
         {
             list.map(i =>
-                <button type="button" className="list-group-item list-group-item-action">
+                <button key={i.id} type="button" className="list-group-item list-group-item-action">
                     <div className="row">
                         <div className="col">{i.name}</div>
                         <div className="col-auto">

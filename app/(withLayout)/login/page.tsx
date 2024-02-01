@@ -27,7 +27,7 @@ export default function LoginPage() {
         }
 
         fetchData()
-    }, [])
+    }, [router])
 
     async function signIn() {
         try {

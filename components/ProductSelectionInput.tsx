@@ -1,7 +1,7 @@
 import { Product } from '@/db/types/product'
 import { findProduct } from '@/repositories/product'
 import { debounce } from 'lodash'
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 export default function ProductSelectionInput({
     preSelected = null,
@@ -21,16 +21,16 @@ export default function ProductSelectionInput({
     const [productSearching, setProductSearching] = useState(false)
     const [productIndex, setProductIndex] = useState(-1)
 
-    const debouncedProductDisplayChange = useCallback(debounce(searchProducts, 500), [])
+    const debouncedProductDisplayChange = useMemo(() => debounce(searchProducts, 500), [])
 
     useEffect(() => {
         setProductDisplay(product ? product.name : '')
         onProductChange(product)
-    }, [product])
+    }, [product, onProductChange])
 
     useEffect(() => {
         debouncedProductDisplayChange(productDisplay)
-    }, [productDisplay])
+    }, [productDisplay, debouncedProductDisplayChange])
 
     async function searchProducts(name: string) {
         const { data } = await findProduct({ name }, 5)

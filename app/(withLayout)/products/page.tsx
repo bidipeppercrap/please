@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { debounce } from 'lodash'
 import { NewRequestProduct } from '@/db/types/request_product'
 
@@ -26,12 +26,12 @@ export default function ProductPage() {
     const [activeModal, setActiveModal] = useState<'selection' | 'requests' | null>(null)
     const [filterType, setFilterType] = useState<'all' | 'unlisted'>('unlisted')
 
-    const debouncedHandleNameChange = useCallback(debounce(search, 500), [])
+    const debouncedHandleNameChange = useMemo(() => debounce(search, 500), [])
 
     useEffect(() => {
         setIsLoading(true)
         debouncedHandleNameChange(searchQuery, pageNumber, filterType)
-    }, [searchQuery, pageNumber, filterType])
+    }, [searchQuery, pageNumber, filterType, debouncedHandleNameChange])
 
     function handleFilterTypeChange(type: 'all' | 'unlisted') {
         setPageNumber(1)

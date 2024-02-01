@@ -1,10 +1,11 @@
-import { NewRequest, RequestUpdate } from '@/db/types/request'
+import { NewRequest } from '@/db/types/request'
 import { Vendor } from '@/db/types/vendor'
+import { findRequestById } from '@/repositories/request'
 import { findVendor, findVendorById } from '@/repositories/vendor'
-import { isValid, parseISO } from 'date-fns'
+import { formatISO, isValid, parseISO } from 'date-fns'
 import { debounce } from 'lodash'
 import Link from 'next/link'
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 const defaultRequest: NewRequest = {
     reference: '',
@@ -17,25 +18,18 @@ const defaultRequest: NewRequest = {
 }
 
 export default function RequestForm({
-    request = defaultRequest,
-    handler = {
-        referenceChange: null,
-        vendorNameChange: null,
-        vendorChange: () => {},
-        sourceDocumentChange: null,
-        noteChange: null,
-        acceptedAtChange: () => {}
-    },
+    request_id = null,
     onSave,
     onDelete,
     onPrint
 }: {
-    request: NewRequest | RequestUpdate,
-    handler: any,
-    onSave: any,
+    request_id: number | null,
+    onSave: (request: NewRequest) => Promise<void>,
     onDelete: any,
     onPrint: (() => void) | null
 }) {
+    const [ready, setReady] = useState(false)
+    const [request, setRequest] = useState<NewRequest>(defaultRequest)
     const [vendor, setVendor] = useState<Vendor | null>(null)
     const [vendorList, setVendorList] = useState<Vendor[]>([])
     const [vendorDisplay, setVendorDisplay] = useState('')
@@ -45,24 +39,55 @@ export default function RequestForm({
 
     const [acceptedAtError, setAcceptedAtError] = useState(false)
 
-    const debouncedHandleVendorChange = useCallback(debounce(searchVendor, 500), [])
+    const debouncedHandleVendorChange = useMemo(() => debounce(searchVendor, 500), [])
 
     useEffect(() => {
-        if (!vendor && request.vendor_id) {
+        const fetchData = async () => {
+            if (!request_id) return
+
+            const req = await findRequestById(request_id)
+
+            if (req) {
+                const parsed: NewRequest = {
+                    reference: req.reference,
+                    note: req.note,
+                    source_document: req.source_document,
+                    accepted_at: req.accepted_at ? formatISO(req.accepted_at, { representation: 'date' }) : '',
+                    updated_at: req.updated_at ? formatISO(req.updated_at) : '',
+                    vendor_name: req.vendor_name,
+                    vendor_id: req.vendor_id
+                }
+
+                setRequest(parsed)
+                setReady(true)
+            }
+        }
+
+        fetchData()
+    }, [request_id])
+
+    useEffect(() => {
+        if (request.vendor_id) {
             const fetchVendor = async () => await findVendorById(request.vendor_id!)
 
             fetchVendor().then(result => setVendor(result!))
         }
-    }, [])
+    }, [request.vendor_id])
 
     useEffect(() => {
-        setVendorDisplay(vendor ? vendor.name : '')
-        if (vendor?.id !== request.vendor_id) handler.vendorChange(vendor)
+        const vendorName = vendor ? vendor.name : ''
+        const vendorId = vendor ? vendor.id : null
+
+        setVendorDisplay(vendorName)
+        setRequest(r => { return {
+            ...r,
+            vendor_id: vendorId
+        }})
     }, [vendor])
 
     useEffect(() => {
         debouncedHandleVendorChange(vendorDisplay)
-    }, [vendorDisplay])
+    }, [vendorDisplay, debouncedHandleVendorChange])
 
     async function searchVendor(name: string) {
         const { data } = await findVendor({ name }, 5)
@@ -91,6 +116,10 @@ export default function RequestForm({
 
     function selectVendor() {
         setVendor(vendorList[vendorIndex])
+        setRequest({
+            ...request,
+            vendor_name: vendorList[vendorIndex].name
+        })
         setVendorList([])
         setVendorSelection(false)
         setVendorIndex(-1)
@@ -110,26 +139,69 @@ export default function RequestForm({
         setVendorIndex(prev => prev + step)
     }
 
-    function handleAcceptedAtChange(e: any) {
-        const value = e.target.value
-        handler.acceptedAtChange(value)
-
-        if (value.length < 1) {
-            setAcceptedAtError(false)
-            return
-        }
-
-        const parsed = parseISO(value)
-
-        if (isValid(parsed)) {
-            setAcceptedAtError(false)
-        }
-        else setAcceptedAtError(true)
-    }
-
     function clearVendor() {
         setVendor(null)
     }
+
+    const handlers = {
+        referenceChange(e: any) {
+            setRequest({
+                ...request,
+                reference: e.target.value
+            })
+        },
+        vendorNameChange(e: any) {
+            setRequest({
+                ...request,
+                vendor_name: e.target.value
+            })
+        },
+        vendorChange: () => {},
+        sourceDocumentChange(e: any) {
+            setRequest({
+                ...request,
+                source_document: e.target.value
+            })
+        },
+        noteChange(e: any) {
+            setRequest({
+                ...request,
+                note: e.target.value
+            })
+        },
+        acceptedAtChange(e: any) {
+            const value = e.target.value
+
+            if (!value) setRequest({
+                ...request,
+                accepted_at: undefined
+            })
+            else setRequest({
+                ...request,
+                accepted_at: value
+            })
+
+            if (value.length < 1) {
+                setAcceptedAtError(false)
+                return
+            }
+
+            const parsed = parseISO(value)
+
+            if (isValid(parsed)) {
+                setAcceptedAtError(false)
+            }
+            else setAcceptedAtError(true)
+        }
+    }
+
+    if (request_id && !ready) return (
+        <div className="card">
+            <div className="card-body p-5">
+                <h1 className="text-center mb-5 mt-5">Loading...</h1>
+            </div>
+        </div>
+    )
 
     return (
         <div className="card">
@@ -138,7 +210,7 @@ export default function RequestForm({
                     <div className="col-auto">
                         <input
                             value={request.reference}
-                            onChange={handler.referenceChange}
+                            onChange={handlers.referenceChange}
                             autoComplete='off'
                             autoCorrect='off'
                             placeholder='P#####' type="text" name="" id="requestName" className="form-control form-control-lg" />
@@ -149,7 +221,7 @@ export default function RequestForm({
                         <label htmlFor="requestVendorName" className="form-label">Vendor Name</label>
                         <input
                             value={request.vendor_name || ''}
-                            onChange={handler.vendorNameChange}
+                            onChange={handlers.vendorNameChange}
                             autoComplete='off'
                             autoCorrect='off'
                             type="text" name="" id="requestVendorName" className="form-control" />
@@ -159,7 +231,7 @@ export default function RequestForm({
                         <label htmlFor="requestSourceDocument" className="form-label">Source Document</label>
                         <input
                             value={request.source_document || ''}
-                            onChange={handler.sourceDocumentChange}
+                            onChange={handlers.sourceDocumentChange}
                             autoComplete='off'
                             autoCorrect='off'
                             type="text" id='requestSourceDocument' className="form-control" />
@@ -206,7 +278,7 @@ export default function RequestForm({
                         <label htmlFor="requestAcceptedAt" className="form-label">Accepted At</label>
                         <input
                             value={request.accepted_at || ''}
-                            onChange={handleAcceptedAtChange}
+                            onChange={handlers.acceptedAtChange}
                             autoComplete='off'
                             autoCorrect='off'
                             id='requestAcceptedAt' type="text" className="form-control" />
@@ -222,7 +294,7 @@ export default function RequestForm({
                         <label htmlFor="requestNote" className="form-label">Note</label>
                         <textarea
                             value={request.note || ''}
-                            onChange={handler.noteChange}
+                            onChange={handlers.noteChange}
                             autoComplete='off'
                             autoCorrect='off'
                             style={{resize: 'none', width: '18rem'}} rows={3} id='requestNote' className="form-control" />
@@ -233,7 +305,7 @@ export default function RequestForm({
                         ? (
                             <div className="col-auto">
                                 <Link
-                                    href={`/print/request/${request.id}`}
+                                    href={`/print/request/${request_id}`}
                                     onClick={onPrint}
                                     rel="noopener noreferrer"
                                     target="_blank"
@@ -256,7 +328,7 @@ export default function RequestForm({
                     <div className="col-auto">
                         <button
                             disabled={acceptedAtError}
-                            onClick={onSave}
+                            onClick={() => onSave(request)}
                             style={{width: '5rem'}} type="button" className="btn btn-lg btn-primary">Save</button>
                     </div>
                 </div>

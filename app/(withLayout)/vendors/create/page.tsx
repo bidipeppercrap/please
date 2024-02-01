@@ -1,7 +1,7 @@
 'use client'
 
 import DuplicateList from '@/components/DuplicateList'
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { debounce } from 'lodash'
 import { createVendor, findVendor } from '@/repositories/vendor'
 
@@ -10,11 +10,11 @@ export default function VendorCreatePage() {
     const [vendors, setVendors] = useState<any[]>([])
     const [isLoading, setIsLoading] = useState(false)
 
-    const debouncedHandleNameChange = useCallback(debounce(search, 500), [])
+    const debouncedHandleNameChange = useMemo(() => debounce(search, 500), [])
 
     useEffect(() => {
         debouncedHandleNameChange(name)
-    }, [name])
+    }, [name, debouncedHandleNameChange])
 
     async function search(name: string) {
         const { data } = await findVendor({ name }, 10, 1)

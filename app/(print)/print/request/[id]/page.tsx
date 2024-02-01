@@ -62,7 +62,7 @@ export default function RequestPrint({ params }: { params: { id: number }}) {
         }
 
         fetchData()
-    }, [])
+    }, [params.id])
 
     return (
         <main className="print-preview">

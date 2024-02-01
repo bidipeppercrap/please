@@ -9,7 +9,7 @@ import { Request } from '@/db/types/request'
 import { RequestProduct, RequestProductDetail, RequestProductUpdate } from '@/db/types/request_product'
 import { deleteRequestProduct, findRequestProduct, moveWaitlistToRequest, updateWaitlist } from '@/repositories/request-product'
 import { debounce } from 'lodash'
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 
 export default function WaitlistPage() {
     const pageSize = 20
@@ -22,11 +22,18 @@ export default function WaitlistPage() {
     const [pageNumber, setPageNumber] = useState(1)
     const [pageCount, setPageCount] = useState(1)
 
-    const debouncedHandleSearchChange = useCallback(debounce(searchWaitlist, 500), [])
+    const debouncedHandleSearchChange = useMemo(() => debounce(searchWaitlist, 500), [])
+
+    const refreshList = useCallback((query: string) => {
+        setWaitlist([])
+        setIsLoading(true)
+        setSearch(query)
+        debouncedHandleSearchChange(query, pageSize, pageNumber)
+    }, [debouncedHandleSearchChange, pageNumber])
 
     useEffect(() => {
         refreshList(search)
-    }, [pageNumber])
+    }, [pageNumber, refreshList, search])
     
     async function searchWaitlist(description: string, pageSize: number, pageNumber: number) {
         const { data, count } = await findRequestProduct({ description }, pageSize, pageNumber, 'description')
@@ -41,13 +48,6 @@ export default function WaitlistPage() {
 
         setPageNumber(1)
         refreshList(query)
-    }
-
-    function refreshList(query: string) {
-        setWaitlist([])
-        setIsLoading(true)
-        setSearch(query)
-        debouncedHandleSearchChange(query, pageSize, pageNumber)
     }
 
     async function handleItemDelete(id: number) {

@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { debounce } from 'lodash'
 
 import { find } from '@/app/(withLayout)/categories/actions'
@@ -36,14 +36,14 @@ export default function CategorySelectionInput({ onCategorySelect }: { onCategor
 
     const inputRef = useRef(null)
 
-    const debouncedHandleNameChange = useCallback(debounce(fetchData, 500), [])
+    const debouncedHandleNameChange = useMemo(() => debounce(fetchData, 500), [])
 
     useEffect(() => {
         if (selectedCategory) {
             setName(selectedCategory.name)
             onCategorySelect(selectedCategory)
         }
-    }, [selectedCategory])
+    }, [selectedCategory, onCategorySelect])
 
     async function fetchData(name: string) {
         if (name.length < 1) return

@@ -6,7 +6,7 @@ import { ProductCollectionExtended } from '@/db/types/product_collection'
 import { createCollection, deleteCollection, findCollections } from '@/repositories/collection'
 import { deleteProductCollection, findProductCollection } from '@/repositories/product-collection'
 import { debounce } from 'lodash'
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 const paginationDefault = {
     pageNumber: 1,
@@ -48,7 +48,7 @@ function ProductSection(collection: Collection | null) {
     const [products, setProducts] = useState<ProductCollectionExtended[]>([])
     const [pagination, setPagination] = useState(paginationDefault)
 
-    const debouncedSearchChange = useCallback(debounce(searchProduct, 500), [])
+    const debouncedSearchChange = useMemo(() => debounce(searchProduct, 500), [])
 
     useEffect(() => {
         setLoading(true)
@@ -57,7 +57,7 @@ function ProductSection(collection: Collection | null) {
 
     useEffect(() => {
         if (collection) debouncedSearchChange(search, collection.id, pagination.pageNumber)
-    }, [search, pagination.pageNumber, collection])
+    }, [search, pagination.pageNumber, collection, debouncedSearchChange])
 
     async function searchProduct(name = '', colId: number | null, pageNumber: number) {
         if (colId === null) return setProducts([])
@@ -135,7 +135,7 @@ function ProductList(list: ProductCollectionExtended[], loading = false, onDelet
     if (list.length > 0) return <div className="list-group">
         {
             list.map(i =>
-                <button type="button" className="list-group-item list-group-item-action">
+                <button key={i.id} type="button" className="list-group-item list-group-item-action">
                     <div className="row">
                         <div className="col">{i.name}</div>
                         <div className="col">{i.description}</div>
@@ -159,11 +159,11 @@ function CollectionSection(onSelect: (collection: Collection) => void) {
     const [collections, setCollections] = useState<Collection[]>([])
     const [pagination, setPagination] = useState(paginationDefault)
 
-    const debouncedSearchChange = useCallback(debounce(searchCollection, 500), [])
+    const debouncedSearchChange = useMemo(() => debounce(searchCollection, 500), [])
 
     useEffect(() => {
         debouncedSearchChange(search, pagination.pageNumber)
-    }, [search, pagination.pageNumber])
+    }, [search, pagination.pageNumber, debouncedSearchChange])
 
     const handlers = {
         async onDeleteCollection(id: number) {

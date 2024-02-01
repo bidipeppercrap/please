@@ -1,11 +1,11 @@
 'use client'
 
 import Pagination from '@/components/Pagination'
-import { Vendor, VendorUpdate } from '@/db/types/vendor'
+import { Vendor } from '@/db/types/vendor'
 import { deleteVendor, findVendor, updateVendor } from '@/repositories/vendor'
 import { debounce } from 'lodash'
 import Link from 'next/link'
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 const paginationDefault = {
     pageNumber: 1,
@@ -20,12 +20,12 @@ export default function VendorPage() {
     const [pagination, setPagination] = useState(paginationDefault)
     const [vendors, setVendors] = useState<Vendor[]>([])
 
-    const debouncedSearchChange = useCallback(debounce(searchVendors, 500), [])
+    const debouncedSearchChange = useMemo(() => debounce(searchVendors, 500), [])
 
     useEffect(() => {
         setLoading(true)
         debouncedSearchChange(search, pagination.pageNumber)
-    }, [search, pagination.pageNumber])
+    }, [search, pagination.pageNumber, debouncedSearchChange])
 
     const handlers = {
         searchChange(e: any) {
