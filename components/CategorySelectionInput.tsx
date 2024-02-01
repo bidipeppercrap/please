@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { debounce } from 'lodash'
 
 import { find } from '@/app/(withLayout)/categories/actions'
+import { Category } from '@/db/types/category'
 
 function CategoryList({ name, categories, isSearching, selectedIndex }: { name: string, categories: any[], isSearching: boolean, selectedIndex: null | number }) {
     function ListBuilder(name: string) {
@@ -30,11 +31,11 @@ export default function CategorySelectionInput({ onCategorySelect }: { onCategor
     const [showList, setShowList] = useState(false)
     const [isSearching, setIsSearching] = useState(false)
     const [categories, setCategories] = useState<any[]>([])
-    const [selectedCategory, setSelectedCategory] = useState(null)
+    const [selectedCategory, setSelectedCategory] = useState<Category | null>(null)
     const [selectionIndex, setSelectionIndex] = useState<number>(-1)
     const [isLocked, setIsLocked] = useState(false)
 
-    const inputRef = useRef(null)
+    const inputRef = useRef<any>(null)
 
     const debouncedHandleNameChange = useMemo(() => debounce(fetchData, 500), [])
 
@@ -87,7 +88,7 @@ export default function CategorySelectionInput({ onCategorySelect }: { onCategor
 
     function selectCategory() {
         setSelectedCategory(categories[selectionIndex])
-        inputRef.current.blur()
+        if (inputRef.current) inputRef.current.blur()
     }
 
     function moveSelection(step: number) {
