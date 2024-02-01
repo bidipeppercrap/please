@@ -173,7 +173,7 @@ function VendorList(
         <div className="list-group">
             {
                 vendors.map(v =>
-                    <button type="button" className="list-group-item list-group-item-action">
+                    <button key={v.id} type="button" className="list-group-item list-group-item-action">
                         {
                             editingId == v.id
                             ? (

@@ -1,3 +1,4 @@
+import LogoutButton from "@/components/LogoutButton";
 import Link from "next/link";
 
 interface ConfigLink {
@@ -27,6 +28,7 @@ export default function ConfigPage() {
                                 </div>
                             </Link>
                         )}
+                        <LogoutButton />
                     </div>
                 </div>
             </div>

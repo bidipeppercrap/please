@@ -264,7 +264,7 @@ function CollectionList(
     if (list.length > 0) return <div className="list-group">
         {
             list.map((i, index) =>
-                <button type="button" className="list-group-item list-group-item-action">
+                <button key={i.id} type="button" className="list-group-item list-group-item-action">
                     <div className="row">
                         <div onClick={() => onSelect(i)} className="col">{i.name}</div>
                         <div className="col-auto">

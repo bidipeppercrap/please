@@ -14,8 +14,8 @@ export default function Home() {
           <h1 className="text-center mb-3">Todo</h1>
           <ul className="list-group">
             {
-              todo.map(i =>
-                <li className="list-group-item">{i}</li>
+              todo.map((i, index) =>
+                <li key={index} className="list-group-item">{i}</li>
               )
             }
           </ul>

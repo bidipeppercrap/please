@@ -22,6 +22,7 @@ export default function WaitList(
         <ul className="list-group">
             {list.map(item =>
                 <WaitListItem
+                    key={item.id}
                     isEdit={editing === item.id}
                     item={item}
                     isSelected={isSelected(item)}
@@ -159,7 +160,7 @@ function WaitListItem({
         </div>
     </li>
 
-    return <li key={item.id} className="list-group-item list-group-item-action">
+    return <li className="list-group-item list-group-item-action">
         <div className="row">
             <div className="col-auto">
                 <input
