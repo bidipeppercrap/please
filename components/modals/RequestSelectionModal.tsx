@@ -29,7 +29,7 @@ export default function RequestSelectionModal({
         debouncedSearchChange(vendorSearch, referenceSearch, pageSize, pageNumber, excludeId)
     }, [pageNumber, vendorSearch, referenceSearch, debouncedSearchChange, excludeId])
 
-    async function searchRequest(vendor: string, reference: string, pageSize: number, pageNumber: number, excludeId: number) {
+    async function searchRequest(vendor: string, reference: string, pageSize: number, pageNumber: number, excludeId: number | null) {
         const { data, count } = await findRequest({
             vendor_name: vendor,
             reference: reference
