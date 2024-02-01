@@ -6,8 +6,8 @@ import WaitList from '@/components/WaitList'
 import RequestSelectionModal from '@/components/modals/RequestSelectionModal'
 import ViewSelectedWailistModal from '@/components/modals/ViewSelectedWaitlistModal'
 import { Request } from '@/db/types/request'
-import { RequestProductDetail } from '@/db/types/request_product'
-import { deleteRequestProduct, findRequestProduct, moveWaitlistToRequest } from '@/repositories/request-product'
+import { RequestProduct, RequestProductDetail, RequestProductUpdate } from '@/db/types/request_product'
+import { deleteRequestProduct, findRequestProduct, moveWaitlistToRequest, updateWaitlist } from '@/repositories/request-product'
 import { debounce } from 'lodash'
 import { useState, useCallback, useEffect } from 'react'
 
@@ -110,6 +110,19 @@ export default function WaitlistPage() {
         refreshList(search)
     }
 
+    async function saveWaitlist(item: RequestProduct) {
+        const updateWith: RequestProductUpdate = {
+            product_id: item.product_id,
+            description: item.description,
+            quantity: item.quantity,
+            unit: item.unit,
+            note: item.note
+        }
+
+        await updateWaitlist(item.id, updateWith)
+        await searchWaitlist(search, pageSize, pageNumber)
+    }
+
     return (
         <main className="container-fluid mb-5 mt-5">
             {
@@ -136,7 +149,7 @@ export default function WaitlistPage() {
                 : null
             }
             <div className="d-grid justify-content-center">
-                <div className="listview">
+                <div className="listview listview-lg">
                     <h1 className="mb-3 text-center">Waitlist</h1>
                     <div className="card mb-3">
                         <div className="card-body">
@@ -167,6 +180,7 @@ export default function WaitlistPage() {
                         onDelete={handleItemDelete}
                         onSelectionChange={handleSelectionChange}
                         selected={selected}
+                        saveWaitlist={saveWaitlist}
                     />
                     <div className="row align-items-center justify-content-center mt-3">
                         <div className="col text-secondary">Page {pageNumber} / {pageCount}</div>

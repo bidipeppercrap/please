@@ -3,7 +3,8 @@ export default function Home() {
     'collection - add product to collection modal',
     'collection - edit product description and note',
     'collection - edit collection name',
-    'category - edit category'
+    'category - edit category',
+    'product - edit category'
   ]
 
   return (

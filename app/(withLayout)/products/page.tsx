@@ -52,9 +52,8 @@ export default function ProductPage() {
     }
 
     async function handleProductDelete(id: number) {
-        setIsLoading(true)
         await deleteProduct(id)
-        debouncedHandleNameChange(searchQuery, pageNumber, filterType)
+        await search(searchQuery, pageNumber, filterType)
     }
 
     function selectAllProduct() {

@@ -16,8 +16,11 @@ export default function ProductList(
                 name: value
             })
         },
-        editNameKeyDown(e: any) {
-            if (e.key === 'Enter') saveProduct()
+        async editNameKeyDown(e: any) {
+            if (e.key === 'Enter') {
+                await saveProduct()
+                setEditing(null)
+            }
             if (e.key === 'Escape') setEditing(null)
         },
         clearCategory() {
@@ -30,14 +33,13 @@ export default function ProductList(
         return found.length > 0
     }
 
-    function editProduct(product: Product) {
+    async function editProduct(product: Product) {
+        await saveProduct()
         setEditing(product)
     }
 
     async function saveProduct() {
         if (editing) await onSave(editing)
-
-        setEditing(null)
     }
 
     if (isLoading)

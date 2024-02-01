@@ -181,6 +181,13 @@ export async function updateRequestProductWithOrdering(id: number, updateWith: R
     })
 }
 
+export async function updateWaitlist(id: number, updateWith: RequestProductUpdate) {
+    await db.updateTable('request_product')
+        .set(updateWith)
+        .where('id', '=', id)
+        .execute()
+}
+
 export async function findRequestProduct(
     criteria: Partial<RequestProduct>,
     pageSize: number | null = 25,

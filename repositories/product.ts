@@ -2,12 +2,27 @@
 
 import { db } from '@/db/database'
 import { NewProduct, Product, ProductUpdate } from '@/db/types/product'
+import { createRequestProduct } from './request-product'
+import { NewRequestProduct } from '@/db/types/request_product'
 
 export async function createProduct(product: NewProduct) {
-    return await db.insertInto('product')
-        .values(product)
-        .returningAll()
-        .executeTakeFirstOrThrow()
+    await db.transaction().execute(async (transaction) => {
+        const inserted = await transaction.insertInto('product')
+            .values(product)
+            .returningAll()
+            .executeTakeFirstOrThrow()
+
+        const requestProduct: NewRequestProduct = {
+            description: inserted.name,
+            quantity: 1,
+            is_section: false,
+            product_id: inserted.id
+        }
+        
+        await transaction.insertInto('request_product')
+            .values(requestProduct)
+            .execute()
+    })
 }
 
 export async function updateProduct(id: number, updateWith: ProductUpdate) {
@@ -27,6 +42,13 @@ export async function deleteProductBulk(ids: number[]) {
     return await db.deleteFrom('product').where('id', 'in', ids)
         .returningAll()
         .execute()
+}
+
+export async function findProductById(id: number) {
+    return await db.selectFrom('product')
+        .where('id', '=', id)
+        .selectAll()
+        .executeTakeFirst()
 }
 
 export async function findProduct(
