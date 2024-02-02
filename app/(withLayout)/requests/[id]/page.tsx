@@ -158,6 +158,8 @@ export default function RequestDetailPage({
     async function saveProduct(product: RequestProductDetail) {
         const { product_name, ...withUpdate } = product
 
+        withUpdate.description = !withUpdate.description && product_name ? product_name : withUpdate.description
+
         await updateRequestProductWithOrdering(product.id!, withUpdate)
     }
 

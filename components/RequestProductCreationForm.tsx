@@ -1,7 +1,7 @@
 import { Product } from '@/db/types/product'
 import { NewRequestProduct } from '@/db/types/request_product'
 import { useEffect, useRef, useState } from 'react'
-import ProductSelectionInput from './ProductSelectionInput'
+import ProductSelectionInput from './ProductSelectionInput02'
 
 const defaultProduct: NewRequestProduct = {
     description: '',
@@ -19,8 +19,10 @@ const defaultSection: NewRequestProduct = {
 }
 
 export default function RequestProductCreationForm({ onNewProductSave, onSectionSave }: { onNewProductSave: any, onSectionSave: any }) {
-    const [newSection, setNewSection] = useState<NewRequestProduct>(defaultSection)
     const [addMode, setAddMode] = useState<'product' | 'section' | null>(null)
+
+    const [newSection, setNewSection] = useState<NewRequestProduct>(defaultSection)
+
     const [newProduct, setNewProduct] = useState<NewRequestProduct>(defaultProduct)
     const [product, setProduct] = useState<Product | null>(null)
 
@@ -86,16 +88,11 @@ export default function RequestProductCreationForm({ onNewProductSave, onSection
         if (e.key === 'Escape') handleCancelAddProduct()
     }
 
-    function handleNewProductSelectionKeyDown(e: any) {
-        if (e.key === 'Escape') handleCancelAddProduct()
-        if (e.key === 'Enter' && productDescriptionInputRef) productDescriptionInputRef.current.focus()
-
-    }
-
     function handleOnSelectProduct(productData: Product | null) {
         setProduct(productData)
         setNewProduct({
             ...newProduct,
+            product_id: productData ? productData.id : null,
             description: productData ? productData.name : ''
         })
         if (productDescriptionInputRef) productDescriptionInputRef.current.focus()
@@ -104,7 +101,7 @@ export default function RequestProductCreationForm({ onNewProductSave, onSection
     function saveNewProduct() {
         onNewProductSave({
             ...newProduct,
-            description: !newProduct.description && product ? product.name : newProduct.description
+            description: newProduct.description.length < 1 && product ? product.name : newProduct.description
         })
         setNewProduct(defaultProduct)
         setProduct(null)
@@ -151,13 +148,8 @@ export default function RequestProductCreationForm({ onNewProductSave, onSection
                         <div className="row g-2 align-items-center">
                             <div className="col">
                                 <ProductSelectionInput
-                                    onKeyDown={handleNewProductSelectionKeyDown}
-                                    preSelected={null}
+                                    productId={null}
                                     onSelect={handleOnSelectProduct}
-                                    onProductChange={(productData) => setNewProduct({
-                                        ...newProduct,
-                                        product_id: productData === null ? null : productData.id
-                                    })}
                                 />
                             </div>
                             <div className="col">
