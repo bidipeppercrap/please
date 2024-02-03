@@ -105,7 +105,7 @@ export default function RequestProductCreationForm({ onNewProductSave, onSection
         })
         setNewProduct(defaultProduct)
         setProduct(null)
-        setAddMode(null)
+        if (productDescriptionInputRef) productDescriptionInputRef.current.focus()
     }
 
     function saveSection() {
