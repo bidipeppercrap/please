@@ -109,11 +109,11 @@ export async function deleteRequestProductWithOrdering(id: number) {
             .execute()
         
         await transaction.updateTable('request')
-        .set({
-            updated_at: formatISO(Date.now())
-        })
-        .where('id', '=', deleted.request_id)
-        .execute()
+            .set({
+                updated_at: formatISO(Date.now())
+            })
+            .where('id', '=', deleted.request_id)
+            .execute()
     })
 }
 
@@ -350,6 +350,114 @@ export async function moveRequestToRequest(requestProducts: RequestProduct[], ol
                 eb('id', '=', newRequestId),
                 eb('id', '=', oldRequestId)
             ]))
+            .execute()
+    })
+}
+
+export async function reorderMany(requestProducts: RequestProduct[], requestId: number, orderStart: number) {
+    return await db.transaction().execute(async (transaction) => {
+        // Get the targeted order first
+        const targetOrder = await transaction.selectFrom('request_product')
+            .where('request_id', '=', requestId)
+            .where('order_in_request', '=', orderStart)
+            .selectAll()
+            .executeTakeFirst() as RequestProduct | undefined
+
+        // Substraction
+        for (const product of requestProducts) {
+            await transaction.updateTable('request_product as updatee')
+                .set((eb) => ({
+                    order_in_request: eb('order_in_request', '-', 1)
+                }))
+                .where(({ eb, and }) => and([
+                    eb(
+                        'updatee.order_in_request',
+                        '>',
+                        eb.selectFrom('request_product as current')
+                            .select('current.order_in_request')
+                            .where('current.id', '=', product.id)
+                    ),
+                    eb('updatee.request_id', '=', requestId)
+                ]))
+                .execute()
+        }
+
+        let parsedOrderStart = 1
+
+        if (!targetOrder) {
+            // Safety check, don't let the target order exceeds the last order
+            const lastInOrder = await transaction.selectFrom('request_product')
+                .where('request_id', '=', requestId)
+                .selectAll()
+                .orderBy('order_in_request desc')
+                .executeTakeFirst() as RequestProduct
+            
+            // Don't let the target order to be 0 as well, as the minimum for an order is 1
+            parsedOrderStart = lastInOrder ? (lastInOrder.order_in_request || 0) + 1 : 1
+        } else {
+            const newTargetOrder = await transaction.selectFrom('request_product')
+                .where('id', '=', targetOrder.id)
+                .selectAll()
+                .executeTakeFirst() as RequestProduct | undefined
+            
+            parsedOrderStart = newTargetOrder ? newTargetOrder.order_in_request || 1 : 1
+        }
+
+        // Add order after the selected items
+        await transaction.updateTable('request_product')
+            .set((eb) => ({
+                order_in_request: eb('order_in_request', '+', requestProducts.length)
+            }))
+            .where('request_id', '=', requestId)
+            .where('order_in_request', '>=', parsedOrderStart)
+            .execute()
+        
+        // Fill out the selected items order based on the targeted order
+        for (const { index, product } of requestProducts.map((product, index) => ({ index, product }))) {
+            await transaction.updateTable('request_product')
+                .set({ order_in_request: parsedOrderStart + index })
+                .where('id', '=', product.id)
+                .execute()
+        }
+
+        await transaction.updateTable('request')
+            .set({
+                updated_at: formatISO(Date.now())
+            })
+            .where('id', '=', requestId)
+            .execute()
+    })
+}
+
+export async function deleteMany(requestProducts: RequestProduct[], requestId: number) {
+    return await db.transaction().execute(async (transaction) => {
+        for (const product of requestProducts) {
+            await transaction.updateTable('request_product as updatee')
+                .set((eb) => ({
+                    order_in_request: eb('order_in_request', '-', 1)
+                }))
+                .where(({ eb, and }) => and([
+                    eb(
+                        'updatee.order_in_request',
+                        '>',
+                        eb.selectFrom('request_product as current')
+                            .select('current.order_in_request')
+                            .where('current.id', '=', product.id)
+                    ),
+                    eb('updatee.request_id', '=', requestId)
+                ]))
+                .execute()
+        }
+
+        await transaction.deleteFrom('request_product')
+            .where('id', 'in', requestProducts.map(p => p.id))
+            .execute()
+
+        await transaction.updateTable('request')
+            .set({
+                updated_at: formatISO(Date.now())
+            })
+            .where('id', '=', requestId)
             .execute()
     })
 }

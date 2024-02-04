@@ -11,7 +11,7 @@ import { Product } from '@/db/types/product'
 import { NewRequest, Request, RequestUpdate } from '@/db/types/request'
 import { NewRequestProduct, RequestProduct, RequestProductDetail } from '@/db/types/request_product'
 import { deleteRequest, updateRequest } from '@/repositories/request'
-import { createRequestProductWithOrdering, deleteRequestProductWithOrdering, findRequestProduct, moveRequestToRequest, moveRequestToWaitlist, moveWaitlistToRequest, updateRequestProductWithOrdering } from '@/repositories/request-product'
+import { createRequestProductWithOrdering, deleteMany, deleteRequestProductWithOrdering, findRequestProduct, moveRequestToRequest, moveRequestToWaitlist, moveWaitlistToRequest, reorderMany, updateRequestProductWithOrdering } from '@/repositories/request-product'
 import { formatISO } from 'date-fns'
 import { debounce } from 'lodash'
 import { useRouter } from 'next/navigation'
@@ -105,6 +105,10 @@ export default function RequestDetailPage({
     }
 
     async function handleDeleteProduct(id: number) {
+        const removed = selected.filter(p => p.id !== id)
+    
+        setSelected([...removed])
+        
         await deleteRequestProductWithOrdering(id)
         await refreshProducts()
     }
@@ -279,6 +283,24 @@ export default function RequestDetailPage({
         },
     }
 
+    async function handleReorder(newOrder: number) {
+        setActiveModal(null)
+
+        await reorderMany(selected, params.id, newOrder)
+
+        setSelected([])
+        await refreshProducts()
+    }
+
+    async function handleDeleteSelected() {
+        setActiveModal(null)
+
+        await deleteMany(selected, params.id)
+
+        setSelected([])
+        await refreshProducts()
+    }
+
     return (
         <main className="container-fluid mt-5" style={{marginBottom: '25rem'}}>
             {
@@ -290,8 +312,9 @@ export default function RequestDetailPage({
                     onModalClose={() => setActiveModal(null)}
                     removeSelected={editProductHandler.handleSelectionChange}
                     clearSelection={() => setSelected([])}
-                    onDelete={null}
+                    onDelete={handleDeleteSelected}
                     onRequest={() => setActiveModal('requests')}
+                    onReorder={handleReorder}
                 />
                 : null
             }

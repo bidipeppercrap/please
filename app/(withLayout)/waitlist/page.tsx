@@ -128,6 +128,7 @@ export default function WaitlistPage() {
             {
                 activeModal === 'selection'
                 ? <ViewSelectedWailistModal
+                    onReorder={null}
                     modalTitle='Selected Waitlist'
                     onWaitlist={null}
                     selected={selected}

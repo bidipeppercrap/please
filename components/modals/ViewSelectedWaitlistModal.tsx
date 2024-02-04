@@ -8,7 +8,8 @@ export default function ViewSelectedWailistModal({
     clearSelection,
     onDelete,
     onRequest,
-    onWaitlist = null
+    onWaitlist = null,
+    onReorder = null
 }: {
     modalTitle: string,
     onModalClose: any,
@@ -17,8 +18,13 @@ export default function ViewSelectedWailistModal({
     clearSelection: any,
     onDelete: any | null,
     onRequest: any,
-    onWaitlist: any | null
+    onWaitlist: any | null,
+    onReorder: ((newOrder: number) => Promise<void>) | null
 }) {
+    function handleReorderKeyDown(e: any) {
+        if (e.key === 'Enter' && onReorder) onReorder(e.target.value)
+    }
+
     return (
         <div className="modal">
             <div className="modal-dialog modal-dialog-scrollable">
@@ -50,13 +56,30 @@ export default function ViewSelectedWailistModal({
                         }
                     </div>
                     <div className="modal-footer">
-                        {
-                            onWaitlist
-                            ? <button onClick={onWaitlist} type="button" className="btn btn-secondary">Move to Waitlist</button>
-                            : null
-                        }
-                        <button onClick={onRequest} type="button" className="btn btn-secondary">Move to Request</button>
-                        <button disabled={!onDelete} onClick={onDelete} type="button" className="btn btn-danger"><i className="bi bi-trash"></i></button>
+                        <div className="row g-2">
+                            {
+                                onReorder
+                                ? (
+                                    <div className="col">
+                                        <input
+                                            onKeyDown={handleReorderKeyDown}
+                                            type="number" autoComplete='off' className="form-control" />
+                                    </div>
+                                )
+                                : null
+                            }
+                            {
+                                onWaitlist
+                                ? <div className='col-auto'><button onClick={onWaitlist} type="button" className="btn btn-secondary">Move to Waitlist</button></div>
+                                : null
+                            }
+                            <div className="col-auto">
+                                <button onClick={onRequest} type="button" className="btn btn-secondary">Move to Request</button>
+                            </div>
+                            <div className="col-auto">
+                                <button disabled={!onDelete} onClick={onDelete} type="button" className="btn btn-danger"><i className="bi bi-trash"></i></button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
