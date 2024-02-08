@@ -25,11 +25,43 @@ export default function RequestPrint({ params }: { params: { id: number }}) {
         phoneUrl: '',
         email: ''
     })
+    const [csvUrl, setCsvUrl] = useState('')
+    const [csvOptions, setCsvOptions] = useState({
+        showSection: false
+    })
 
     const handlers = {
         showQuantityChange() { setShowQuantity(!showQuantity) },
-        showNoteChange() { setShowNote(!showNote) }
+        showNoteChange() { setShowNote(!showNote) },
+        showSectionCSVChange() {
+            setCsvUrl('')
+            setCsvOptions({
+                ...csvOptions,
+                showSection: !csvOptions.showSection
+            })
+        }
     }
+
+    useEffect(() => {
+        const refinedData = [['description', 'quantity', 'unit', 'note']]
+
+        products.forEach(row =>
+            row.is_section
+            ? csvOptions.showSection ? refinedData.push(Object.values([row.description, '', '', ''])) : null
+            : refinedData.push(Object.values([row.description, row.quantity.toString(), row.unit || '', row.note || '']))
+        )
+
+        let csv = ''
+
+        refinedData.forEach(row =>
+            csv += row.join(',') + '\n'
+        )
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
+        const objUrl = URL.createObjectURL(blob)
+
+        setCsvUrl(objUrl)
+    }, [products, csvOptions.showSection])
 
     useEffect(() => {
         const sections: SectionData[] = []
@@ -88,6 +120,28 @@ export default function RequestPrint({ params }: { params: { id: number }}) {
                                         role='switch' type="checkbox" id="showNoteInput" className="form-check-input" />
                                     <label htmlFor="showNoteInput" className="form-check-label">Show Note</label>
                                 </div>
+                            </div>
+                        </div>
+                        <hr />
+                        <h5 className="card-title">CSV Option</h5>
+                        <div className="row mb-2">
+                            <div className="col-auto">
+                                <div className="form-check form-switch">
+                                    <input
+                                        checked={csvOptions.showSection}
+                                        onChange={handlers.showSectionCSVChange}
+                                        role='switch' type="checkbox" id="showSectionCSV" className="form-check-input" />
+                                    <label htmlFor="showSectionCSV" className="form-check-label">Show Section</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="row">
+                            <div className="col fw-bold text-secondary">
+                                {
+                                    csvUrl && request
+                                    ? <a href={csvUrl} className="btn btn-sm btn-outline-secondary" download={`${request.reference}.csv`}>Download CSV</a>
+                                    : 'Loading CSV File...'
+                                }
                             </div>
                         </div>
                     </div>
