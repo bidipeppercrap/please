@@ -42,7 +42,7 @@ export default function ViewSelectedWailistModal({
                             ?
                             <ul className="list-group mt-3">
                                 {selected.map(item =>
-                                    <li key={item.id} className="list-group-item list-group-item">
+                                    <li key={item.id} className={`list-group-item list-group-item ${item.is_section ? 'bg-body-secondary text-secondary fw-bold' : ''}`}>
                                         <div className="row align-items-center">
                                             <div className="col">{item.description}</div>
                                             <div className="col-auto">

@@ -376,8 +376,12 @@ export default function RequestDetailPage({
                                                 )
                                                 : (
                                                     <div className="row">
-                                                        <div onClick={() => handleProductInputClick(index)} className="col-auto fw-bold">
-                                                            {p.order_in_request}.
+                                                        <div className="col-auto fw-bold">
+                                                            <input
+                                                                checked={editProductHandler.isSelected(p)}
+                                                                onChange={() => editProductHandler.handleSelectionChange(p)}
+                                                                type="checkbox" name="" id={`itemCheckbox-${p.id}`} className="form-check-input me-3" />
+                                                            <label onClick={() => handleProductInputClick(index)} htmlFor={`itemCheckbox-${p.id}`} className="form-check-label">{p.order_in_request}.</label>
                                                         </div>
                                                         <div onClick={() => handleProductInputClick(index)} className="col fw-bold">
                                                             {p.description}
