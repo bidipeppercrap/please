@@ -25,6 +25,7 @@ export default function RequestProductCreationForm({ onNewProductSave, onSection
 
     const [newProduct, setNewProduct] = useState<NewRequestProduct>(defaultProduct)
     const [product, setProduct] = useState<Product | null>(null)
+    const [ordering, setOrdering] = useState(false)
 
     const addSectionInputRef = useRef<any>(null)
     const productDescriptionInputRef = useRef<any>(null)
@@ -34,8 +35,14 @@ export default function RequestProductCreationForm({ onNewProductSave, onSection
     }, [addSectionInputRef])
 
     function handleAddSectionKeyDown(e: any) {
-        if (e.key === 'Escape') return setAddMode(null)
+        if (e.key === 'Escape') return cancleAddSection()
         if (e.key === 'Enter') return saveSection()
+    }
+
+    function cancleAddSection() {
+        setAddMode(null)
+        setNewSection(defaultSection)
+        setOrdering(false)
     }
 
     function handleSectionChange(e: any) {
@@ -53,6 +60,7 @@ export default function RequestProductCreationForm({ onNewProductSave, onSection
         setAddMode(null)
         setNewProduct(defaultProduct)
         setProduct(null)
+        setOrdering(false)
     }
 
     function handleNewProductDescriptionChange(e: any) {
@@ -103,7 +111,10 @@ export default function RequestProductCreationForm({ onNewProductSave, onSection
             ...newProduct,
             description: newProduct.description.length < 1 && product ? product.name : newProduct.description
         })
-        setNewProduct(defaultProduct)
+        setNewProduct(prev => ({
+            ...defaultProduct,
+            order_in_request: prev.order_in_request ? prev.order_in_request++ : null
+        }))
         setProduct(null)
         if (productDescriptionInputRef) productDescriptionInputRef.current.focus()
     }
@@ -128,6 +139,29 @@ export default function RequestProductCreationForm({ onNewProductSave, onSection
         })
     }
 
+    const handlers = {
+        orderChange(e: any) {
+            setNewProduct({
+                ...newProduct,
+                order_in_request: e.target.value
+            })
+        },
+        sectionOrderChange(e: any) {
+            setNewSection(prev => ({
+                ...prev,
+                order_in_request: e.target.value
+            }))
+        },
+        toggleOrdering() {
+            setOrdering(prev => !prev)
+
+            setNewProduct({
+                ...newProduct,
+                order_in_request: ordering ? null : 1
+            })
+        }
+    }
+
     return (
         <li className="list-group-item">
             {
@@ -146,6 +180,20 @@ export default function RequestProductCreationForm({ onNewProductSave, onSection
                     addMode === 'product'
                     ? (
                         <div className="row g-2 align-items-center">
+                            <div className="col-auto">
+                                <input
+                                    checked={ordering}
+                                    onChange={handlers.toggleOrdering}
+                                    type="checkbox" id={`createProductOrderCheckbox`} className="form-check-input me-3" />
+                            </div>
+                            <div className="col-1">
+                                <input
+                                    disabled={!ordering}
+                                    value={newProduct.order_in_request || ''}
+                                    onChange={handlers.orderChange}
+                                    onKeyDown={handleNewProductInputKeyDown}
+                                    placeholder='Order' type="number" className="form-control" />
+                            </div>
                             <div className="col">
                                 <ProductSelectionInput
                                     productId={null}
@@ -167,7 +215,7 @@ export default function RequestProductCreationForm({ onNewProductSave, onSection
                                     value={newProduct.quantity}
                                     onChange={handleNewProductQuantityChange}
                                     onKeyDown={handleNewProductInputKeyDown}
-                                    placeholder='Qty' type="text" className="form-control" />
+                                    placeholder='Qty' type="number" className="form-control" />
                             </div>
                             <div className="col-2">
                                 <input
@@ -189,7 +237,21 @@ export default function RequestProductCreationForm({ onNewProductSave, onSection
                         </div>
                     )
                     : (
-                        <div className="row">
+                        <div className="row g-2 align-items-center">
+                            <div className="col-auto">
+                                <input
+                                    checked={ordering}
+                                    onChange={handlers.toggleOrdering}
+                                    type="checkbox" id={`createProductOrderCheckbox`} className="form-check-input me-3" />
+                            </div>
+                            <div className="col-1">
+                                <input
+                                    disabled={!ordering}
+                                    value={newSection.order_in_request || ''}
+                                    onChange={handlers.sectionOrderChange}
+                                    onKeyDown={handleAddSectionKeyDown}
+                                    placeholder='Order' type="number" className="form-control" />
+                            </div>
                             <div className="col">
                                 <input
                                     value={newSection.description}

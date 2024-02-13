@@ -144,7 +144,7 @@ export default function RequestDetailPage({
         const fresh = products.filter(i => {
             const found = selected.filter(f => f.id === i.id)
 
-            return found.length < 1 && !i.is_section
+            return found.length < 1
         })
 
         setSelected(prev => [...prev, ...fresh])

@@ -59,21 +59,53 @@ export async function createRequestProductWithOrdering(requestProduct: NewReques
         .execute(async (transaction) => {
             const toInsert = {...requestProduct}
 
-            const last = await transaction
-                .selectFrom('request_product')
-                .where('request_id', '=', requestProduct.request_id!)
-                .selectAll()
-                .orderBy('order_in_request desc')
-                .executeTakeFirst()
-            
-            if (!last) toInsert.order_in_request = 1
-            else toInsert.order_in_request = last.order_in_request ? last.order_in_request + 1 : 1
+            if (!toInsert.order_in_request) {
+                const last = await transaction
+                    .selectFrom('request_product')
+                    .where('request_id', '=', requestProduct.request_id!)
+                    .selectAll()
+                    .orderBy('order_in_request desc')
+                    .executeTakeFirst()
+                
+                if (!last) toInsert.order_in_request = 1
+                else toInsert.order_in_request = last.order_in_request ? last.order_in_request + 1 : 1
 
-            await transaction
-                .insertInto('request_product')
-                .values(toInsert)
-                .returningAll()
-                .execute()
+                await transaction
+                    .insertInto('request_product')
+                    .values(toInsert)
+                    .returningAll()
+                    .execute()
+            } else {
+                if (!toInsert.request_id) return
+
+                const lastInOrder = await transaction.selectFrom('request_product')
+                    .where('request_id', '=', toInsert.request_id)
+                    .selectAll()
+                    .orderBy('order_in_request desc')
+                    .executeTakeFirst() as RequestProduct
+
+                let finalOrder = toInsert.order_in_request
+                
+                if (lastInOrder && lastInOrder.order_in_request && finalOrder > lastInOrder.order_in_request)
+                    finalOrder = lastInOrder.order_in_request + 1
+
+                await transaction.updateTable('request_product')
+                    .set((eb) => ({
+                        order_in_request: eb('order_in_request', '+', 1)
+                    }))
+                    .where('request_id', '=', toInsert.request_id)
+                    .where('order_in_request', '>=', toInsert.order_in_request)
+                    .execute()
+
+                await transaction
+                    .insertInto('request_product')
+                    .values({
+                        ...toInsert,
+                        order_in_request: finalOrder
+                    })
+                    .returningAll()
+                    .execute()
+            }
             
             await transaction.updateTable('request')
                 .set({
