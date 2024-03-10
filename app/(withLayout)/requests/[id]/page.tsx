@@ -10,6 +10,7 @@ import ViewSelectedWailistModal from '@/components/modals/ViewSelectedWaitlistMo
 import { Product } from '@/db/types/product'
 import { NewRequest, Request, RequestUpdate } from '@/db/types/request'
 import { NewRequestProduct, RequestProduct, RequestProductDetail } from '@/db/types/request_product'
+import { toStringDelimit } from '@/lib/numbering'
 import { deleteRequest, updateRequest } from '@/repositories/request'
 import { createRequestProductWithOrdering, deleteMany, deleteRequestProductWithOrdering, findRequestProduct, moveRequestToRequest, moveRequestToWaitlist, moveWaitlistToRequest, reorderMany, updateRequestProductWithOrdering } from '@/repositories/request-product'
 import { formatISO } from 'date-fns'
@@ -27,6 +28,7 @@ export default function RequestDetailPage({
 
     const [pageNumber, setPageNumber] = useState(1)
     const [pageCount, setPageCount] = useState(1)
+    const [totalCost, setTotalCost] = useState(0)
 
     const [errorMessage, setErrorMessage] = useState('')
     const [successMessage, setSuccessMessage] = useState('')
@@ -43,8 +45,9 @@ export default function RequestDetailPage({
     const editProductDescriptionRef = useRef<any>(null)
 
     const refreshProducts = useCallback(async () => {
-        const { data, count } = await findRequestProduct({ request_id: params.id }, pageSize, pageNumber, 'order_in_request')
+        const { data, count, totalCost } = await findRequestProduct({ request_id: params.id }, pageSize, pageNumber, 'order_in_request')
 
+        setTotalCost(totalCost)
         setPageCount(Math.ceil(count / pageSize))
         setProducts(data)
     }, [pageNumber, params.id])
@@ -465,7 +468,7 @@ export default function RequestDetailPage({
                                                                 placeholder='Cost' type="text" className="form-control" />
                                                         </div>
                                                         <div className="col-1 text-end fw-bold text-secondary">
-                                                            {((p.cost || 0) * p.quantity)}
+                                                            {toStringDelimit(((p.cost || 0) * p.quantity))}
                                                         </div>
                                                     </div>
                                                 )
@@ -498,11 +501,11 @@ export default function RequestDetailPage({
                                                                 : null
                                                             }
                                                         </div>
-                                                        <div className="col-1 text-end fw-bold text-secondary">
-                                                            {p.cost || ""}
+                                                        <div onClick={() => handleProductInputClick(index)} className="col-1 text-end fw-bold text-secondary">
+                                                            {toStringDelimit(p.cost) || ""}
                                                         </div>
                                                         <div className="col-1 text-end fw-bold text-secondary">
-                                                            {(p.cost || 0 * p.quantity) || ''}
+                                                            {toStringDelimit(((p.cost || 0) * p.quantity)) || ''}
                                                         </div>
                                                         <div className="col-auto">
                                                             <a onClick={() => handleDeleteProduct(p.id)} role='button' className="text-danger"><i className="bi bi-trash"></i></a>
@@ -532,7 +535,7 @@ export default function RequestDetailPage({
                                 pageNumber={pageNumber}
                             />
                         </div>
-                        <div className="col"></div>
+                        <div className="col text-secondary text-end">Total Cost: <span className="fw-bold">{toStringDelimit(totalCost)}</span></div>
                     </div>
                 </div>
             </div>

@@ -2,6 +2,7 @@
 
 import Pagination from '@/components/Pagination'
 import { Request } from '@/db/types/request'
+import { toStringDelimit } from '@/lib/numbering'
 import { deleteRequest, findRequest } from '@/repositories/request'
 import { debounce } from 'lodash'
 import Link from 'next/link'
@@ -58,7 +59,7 @@ export default function RequestPage() {
     return (
         <main className="container-fluid mb-5 mt-5">
             <div className="d-grid justify-content-center">
-                <div className="listview">
+                <div className="listview listview-lg">
                     <h1 className="mb-3 text-center">Requests</h1>
                     <div className="row">
                         <div className="col">
@@ -123,6 +124,11 @@ export default function RequestPage() {
                                             <div className="col-2 fw-bold text-secondary">{r.reference}</div>
                                             <div className="col">{r.vendor_name}</div>
                                             <div className="col fw-bold text-secondary">{r.source_document}</div>
+                                            <div className="col-2">
+                                                <span className="badge text-bg-info">
+                                                    {toStringDelimit(r.total_cost)}
+                                                </span>
+                                            </div>
                                             <div className="col-auto">
                                                 {
                                                     r.accepted_at

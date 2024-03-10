@@ -2,6 +2,7 @@
 
 import { db } from '@/db/database'
 import { Request, NewRequest, RequestUpdate } from '@/db/types/request'
+import { sql } from 'kysely'
 
 export async function createRequest(request: NewRequest) {
     return await db.insertInto('request')
@@ -32,7 +33,8 @@ export async function findRequest(criteria: Partial<Request>, pageSize = 25, pag
     return await db
         .transaction()
         .execute(async (transaction) => {
-            let query = transaction.selectFrom('request')
+            let query = transaction
+                .selectFrom('request')
 
             if (criteria.vendor_name) {
                 const words = criteria.vendor_name.trim().split(' ')
@@ -55,6 +57,13 @@ export async function findRequest(criteria: Partial<Request>, pageSize = 25, pag
 
             const requests = await query
                 .selectAll()
+                .select(({ selectFrom }) => [
+                    selectFrom('request_product')
+                        .whereRef('request.id', '=', 'request_product.request_id')
+                        .select([
+                            sql<number>`sum(cost * quantity)`.as('total_cost')
+                        ]).as('total_cost')
+                ])
                 .orderBy('vendor_name')
                 .orderBy('reference', 'desc')
                 .orderBy('source_document', 'desc')

@@ -9,6 +9,7 @@ export interface RequestTable {
     updated_at: ColumnType<Date, string, string>
     vendor_name: string | null
     vendor_id: number | null
+    total_cost?: number
 }
 
 export type Request = Selectable<RequestTable>

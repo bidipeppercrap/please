@@ -4,6 +4,7 @@ import { db } from '@/db/database'
 import { Product } from '@/db/types/product'
 import { NewRequestProduct, RequestProduct, RequestProductDetail, RequestProductUpdate } from '@/db/types/request_product'
 import { formatISO } from 'date-fns'
+import { sql } from 'kysely'
 
 export async function moveProductToRequest(products: Product[], requestId: number) {
     return await db.transaction().execute(async (transaction) => {
@@ -257,6 +258,7 @@ export async function findRequestProduct(
                 'request_product.order_in_request as order_in_request',
                 'request_product.request_id as request_id',
                 'request_product.product_id as product_id',
+                'request_product.cost as cost',
                 'product.name as product_name'
             ])
             .orderBy(orderBy)
@@ -274,9 +276,16 @@ export async function findRequestProduct(
                 .select(eb => eb.fn.countAll().as('count'))
                 .executeTakeFirstOrThrow()
             
+            const { totalCost } = await query
+                .select(() => [
+                    sql<number>`sum(cost * quantity)`.as('totalCost')
+                ])
+                .executeTakeFirstOrThrow()
+            
             return {
                 data: requestProducts,
-                count: Number(count)
+                count: Number(count),
+                totalCost: Number(totalCost)
             }
         })
 }
