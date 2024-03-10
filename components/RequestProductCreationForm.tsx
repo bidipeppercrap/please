@@ -9,7 +9,7 @@ const defaultProduct: NewRequestProduct = {
     is_section: false,
     note: '',
     unit: '',
-    product_id: null
+    product_id: null,
 }
 
 const defaultSection: NewRequestProduct = {
@@ -88,6 +88,13 @@ export default function RequestProductCreationForm({ onNewProductSave, onSection
         setNewProduct({
             ...newProduct,
             unit: e.target.value
+        })
+    }
+
+    function handleNewProductCostChange(e: any) {
+        setNewProduct({
+            ...newProduct,
+            cost: e.target.value
         })
     }
 
@@ -230,6 +237,16 @@ export default function RequestProductCreationForm({ onNewProductSave, onSection
                                     onKeyDown={handleNewProductInputKeyDown}
                                     onChange={handleNewProductNoteChange}
                                     placeholder='Note' type="text" className="form-control" />
+                            </div>
+                            <div className="col-1">
+                                <input
+                                    value={newProduct.cost || ''}
+                                    onKeyDown={handleNewProductInputKeyDown}
+                                    onChange={handleNewProductCostChange}
+                                    placeholder='Cost' type="text" className="form-control" />
+                            </div>
+                            <div className="col-1 fw-bold text-secondary text-end">
+                                subtotal
                             </div>
                             <div className="col-auto">
                                 <a onClick={handleCancelAddProduct} role='button' className='text-danger ms-2'><i className="bi bi-x-lg"></i></a>

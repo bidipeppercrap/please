@@ -266,6 +266,14 @@ export default function RequestDetailPage({
 
             setProducts(newProducts)
         },
+        handleCostChange: (e: any) => {
+            if (editProductIndex === null) return
+
+            const newProducts = [...products]
+            newProducts[editProductIndex].cost = e.target.value
+
+            setProducts(newProducts)
+        },
         isSelected: (requestProduct: RequestProduct): boolean => {
             const found = selected.filter(s => s.id === requestProduct.id)
             return found.length > 0
@@ -395,7 +403,7 @@ export default function RequestDetailPage({
                                             : (
                                                 editProductIndex === index
                                                 ? (
-                                                    <div className="row g-2">
+                                                    <div className="row g-2 align-items-center">
                                                         <div className="col-1">
                                                             <input
                                                                 onKeyDown={handleEditInputKeyDown}
@@ -444,10 +452,20 @@ export default function RequestDetailPage({
                                                                 onKeyDown={handleEditInputKeyDown}
                                                                 placeholder='Note' type="text" className="form-control" />
                                                         </div>
+                                                        <div className="col-1">
+                                                            <input
+                                                                value={p.cost || ''}
+                                                                onChange={editProductHandler.handleCostChange}
+                                                                onKeyDown={handleEditInputKeyDown}
+                                                                placeholder='Cost' type="text" className="form-control" />
+                                                        </div>
+                                                        <div className="col-1 text-end fw-bold text-secondary">
+                                                            subtotal
+                                                        </div>
                                                     </div>
                                                 )
                                                 : (
-                                                    <div className="row">
+                                                    <div className="row align-items-center">
                                                         <div className="col-1 fw-bold">
                                                             <input
                                                                 checked={editProductHandler.isSelected(p)}
@@ -474,6 +492,12 @@ export default function RequestDetailPage({
                                                                 )
                                                                 : null
                                                             }
+                                                        </div>
+                                                        <div className="col-1 text-end fw-bold text-secondary">
+                                                            {p.cost || ""}
+                                                        </div>
+                                                        <div className="col-1 text-end fw-bold text-secondary">
+                                                            subtotal
                                                         </div>
                                                         <div className="col-auto">
                                                             <a onClick={() => handleDeleteProduct(p.id)} role='button' className="text-danger"><i className="bi bi-trash"></i></a>

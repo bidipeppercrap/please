@@ -10,6 +10,7 @@ export interface RequestProductTable {
     is_section: boolean
     request_id: number | null
     product_id: number | null
+    cost?: number
 }
 
 export type RequestProduct = Selectable<RequestProductTable>
