@@ -80,7 +80,7 @@ export default function RequestDetailPage({
             ...product,
             is_section: false,
             request_id: params.id,
-            quantity: typeof(product.quantity) !== 'number' ? parseInt(product.quantity) : product.quantity
+            quantity: typeof(product.quantity) !== 'number' ? parseInt(product.quantity) : product.quantity,
         }
 
         await createRequestProductWithOrdering(data)
@@ -269,8 +269,13 @@ export default function RequestDetailPage({
         handleCostChange: (e: any) => {
             if (editProductIndex === null) return
 
+            const { value } = e.target
+            if (isNaN(value)) return
+
+            const parsed = parseInt(value)
+
             const newProducts = [...products]
-            newProducts[editProductIndex].cost = e.target.value
+            newProducts[editProductIndex].cost = parsed
 
             setProducts(newProducts)
         },
@@ -460,7 +465,7 @@ export default function RequestDetailPage({
                                                                 placeholder='Cost' type="text" className="form-control" />
                                                         </div>
                                                         <div className="col-1 text-end fw-bold text-secondary">
-                                                            subtotal
+                                                            {((p.cost || 0) * p.quantity)}
                                                         </div>
                                                     </div>
                                                 )
@@ -497,7 +502,7 @@ export default function RequestDetailPage({
                                                             {p.cost || ""}
                                                         </div>
                                                         <div className="col-1 text-end fw-bold text-secondary">
-                                                            subtotal
+                                                            {(p.cost || 0 * p.quantity) || ''}
                                                         </div>
                                                         <div className="col-auto">
                                                             <a onClick={() => handleDeleteProduct(p.id)} role='button' className="text-danger"><i className="bi bi-trash"></i></a>
