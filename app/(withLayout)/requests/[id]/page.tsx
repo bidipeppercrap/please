@@ -275,10 +275,8 @@ export default function RequestDetailPage({
             const { value } = e.target
             if (isNaN(value)) return
 
-            const parsed = parseInt(value)
-
             const newProducts = [...products]
-            newProducts[editProductIndex].cost = parsed
+            newProducts[editProductIndex].cost = value
 
             setProducts(newProducts)
         },

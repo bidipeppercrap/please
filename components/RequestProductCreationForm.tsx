@@ -2,6 +2,7 @@ import { Product } from '@/db/types/product'
 import { NewRequestProduct } from '@/db/types/request_product'
 import { useEffect, useRef, useState } from 'react'
 import ProductSelectionInput from './ProductSelectionInput02'
+import { toStringDelimit } from '@/lib/numbering'
 
 const defaultProduct: NewRequestProduct = {
     description: '',
@@ -92,9 +93,12 @@ export default function RequestProductCreationForm({ onNewProductSave, onSection
     }
 
     function handleNewProductCostChange(e: any) {
+        const { value } = e.target
+        if (isNaN(value)) return
+
         setNewProduct({
             ...newProduct,
-            cost: e.target.value
+            cost: value
         })
     }
 
@@ -246,7 +250,7 @@ export default function RequestProductCreationForm({ onNewProductSave, onSection
                                     placeholder='Cost' type="text" className="form-control" />
                             </div>
                             <div className="col-1 fw-bold text-secondary text-end">
-                                subtotal
+                                {toStringDelimit(((newProduct.cost || 0) * newProduct.quantity)) || ''}
                             </div>
                             <div className="col-auto">
                                 <a onClick={handleCancelAddProduct} role='button' className='text-danger ms-2'><i className="bi bi-x-lg"></i></a>
