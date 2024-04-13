@@ -22,6 +22,15 @@ export async function deleteRequest(id: number) {
         .executeTakeFirst()
 }
 
+export async function starRequest(id: number, starred: boolean) {
+    await db.updateTable('request')
+        .set({
+            starred: starred
+        })
+        .where('id', '=', id)
+        .execute()
+}
+
 export async function findRequestById(id: number) {
     return await db.selectFrom('request')
         .where('id', '=', id)
@@ -64,6 +73,8 @@ export async function findRequest(criteria: Partial<Request>, pageSize = 25, pag
                             sql<number>`sum(cost * quantity)`.as('total_cost')
                         ]).as('total_cost')
                 ])
+                .orderBy('starred', 'desc')
+                .orderBy('accepted_at', 'desc')
                 .orderBy('vendor_name')
                 .orderBy('reference', 'desc')
                 .orderBy('source_document', 'desc')

@@ -10,6 +10,7 @@ export interface RequestTable {
     vendor_name: string | null
     vendor_id: number | null
     total_cost?: number
+    starred?: boolean
 }
 
 export type Request = Selectable<RequestTable>

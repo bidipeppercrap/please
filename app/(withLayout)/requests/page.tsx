@@ -3,7 +3,7 @@
 import Pagination from '@/components/Pagination'
 import { Request } from '@/db/types/request'
 import { toStringDelimit } from '@/lib/numbering'
-import { deleteRequest, findRequest } from '@/repositories/request'
+import { deleteRequest, findRequest, starRequest } from '@/repositories/request'
 import { debounce } from 'lodash'
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
@@ -46,6 +46,12 @@ export default function RequestPage() {
         setIsLoading(true)
         setReferenceSearch(e.target.value)
         setPageNumber(1)
+    }
+
+    async function handleStarRequest(id: number, starred: boolean) {
+        await starRequest(id, starred)
+
+        debouncedSearchChange(vendorSearch, referenceSearch, pageSize, pageNumber)
     }
 
     async function handleDeleteRequest(id: number) {
@@ -121,6 +127,15 @@ export default function RequestPage() {
                                 requests.map(r =>
                                     <li key={r.id} className='list-group-item list-group-item-action'>
                                         <div className="row">
+                                            <div className="col-auto">
+                                                <a onClick={() => handleStarRequest(r.id, !r.starred)} role='button'>
+                                                    {
+                                                        r.starred
+                                                        ? <i className="bi-star-fill"></i>
+                                                        : <i className="bi-star"></i>
+                                                    }
+                                                </a>
+                                            </div>
                                             <div className="col-2 fw-bold text-secondary">{r.reference}</div>
                                             <div className="col">{r.vendor_name}</div>
                                             <div className="col fw-bold text-secondary">{r.source_document}</div>
