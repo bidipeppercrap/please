@@ -20,6 +20,25 @@
     display: block;
 }
 
+.add-bubble-wrapper {
+    display: flex;
+}
+
+.add-bubble {
+    background-color: #dddddd;
+    border-radius: 15px 0 0 15px;
+    height: 30px;
+    width: 15px;
+}
+
+.add-bubble-tail {
+    width: 0;
+    height: 0;
+    border-top: 15px solid transparent;
+    border-left: 30px solid #dddddd;
+    border-bottom: 15px solid transparent;
+}
+
 @media print {
     .print-preview .print-hide {
         display: none !important;

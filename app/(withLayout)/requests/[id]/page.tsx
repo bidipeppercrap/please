@@ -29,6 +29,7 @@ export default function RequestDetailPage({
     const [pageNumber, setPageNumber] = useState(1)
     const [pageCount, setPageCount] = useState(1)
     const [totalCost, setTotalCost] = useState(0)
+    const [showAddBubble, setShowAddBubble] = useState<number | null>(null)
 
     const [errorMessage, setErrorMessage] = useState('')
     const [successMessage, setSuccessMessage] = useState('')
@@ -123,13 +124,25 @@ export default function RequestDetailPage({
     }
 
     async function handleEditInputKeyDown(e: any) {
+        if (e.key === 'Escape' && editProductIndex !== null && products[editProductIndex].id == 0) {
+            const prev = [...products]
+            prev.splice(editProductIndex, 1)
+            setProducts(prev)
+
+            return setEditProductIndex(null)
+        }
+
         if (e.key === 'Escape' || e.key === 'Enter') {
-            if (editProductIndex !== null) {
+            if (editProductIndex !== null && products[editProductIndex].id !== 0) {
                 await saveProduct(products[editProductIndex])
                 await refreshProducts()
             }
-
-            setEditProductIndex(null)
+            
+            if (editProductIndex !== null && products[editProductIndex].id === 0) {
+                await saveProduct(products[editProductIndex])
+                await refreshProducts()
+                handleAddProductBubbleClick(editProductIndex + 1, products[editProductIndex].order_in_request! + 1)
+            } else setEditProductIndex(null)
         }
     }
 
@@ -166,8 +179,11 @@ export default function RequestDetailPage({
         const { product_name, ...withUpdate } = product
 
         withUpdate.description = !withUpdate.description && product_name ? product_name : withUpdate.description
+        
+        const {id, ...withCreate} = withUpdate
 
-        await updateRequestProductWithOrdering(product.id!, withUpdate)
+        if (product.id == 0) await createRequestProductWithOrdering(withCreate)
+        else await updateRequestProductWithOrdering(product.id!, withUpdate)
     }
 
     async function handleMoveToRequest(data: Request) {
@@ -314,6 +330,29 @@ export default function RequestDetailPage({
         setSelected([])
         await refreshProducts()
     }
+    function handleAddProductBubbleClick(index: number, order: number) {
+        const newRequestProduct: RequestProductDetail = {
+            id: 0,
+            description: '',
+            quantity: 0,
+            unit: '',
+            order_in_request: order,
+            is_section: false,
+            note: '',
+            request_id: params.id,
+            product_id: null,
+            cost: 0,
+            product_name: ''
+        }
+
+        setProducts(prev => [
+            ...prev.slice(0, index),
+            newRequestProduct,
+            ...prev.slice(index)
+        ])
+        setEditProductIndex(index)
+        if (editProductDescriptionRef.current !== null) editProductDescriptionRef.current.focus()
+    }
 
     return (
         <main className="container-fluid mt-5" style={{marginBottom: '25rem'}}>
@@ -365,7 +404,21 @@ export default function RequestDetailPage({
                             products.length > 0
                             ? (
                                 products.map((p, index) =>
-                                    <li key={p.id} className={`list-group-item list-group-item-action ${p.is_section ? 'bg-body-secondary text-secondary' : ''}`}>
+                                    <li
+                                        onMouseEnter={() => setShowAddBubble(index)}
+                                        key={p.id} className={`list-group-item list-group-item-action ${p.is_section ? 'bg-body-secondary text-secondary' : ''}`}>
+                                        {
+                                            showAddBubble == index && editProductIndex == null
+                                            ? (
+                                                <span className='position-absolute' style={{left: 0, marginLeft: -35, top: 0}}>
+                                                    <div className="btn-group-vertical btn-group-sm">
+                                                        <button onClick={() => handleAddProductBubbleClick(index, p.order_in_request!)} style={{fontSize: 7}} type="button" className="btn btn-outline-secondary"><i className="bi bi-chevron-up"></i></button>
+                                                        <button onClick={() => handleAddProductBubbleClick(index + 1, (p.order_in_request! + 1))} style={{fontSize: 7}} type="button" className="btn btn-outline-secondary"><i className="bi bi-chevron-down"></i></button>
+                                                    </div>
+                                                </span>
+                                            )
+                                            : null
+                                        }
                                         {
                                             p.is_section
                                             ? (
